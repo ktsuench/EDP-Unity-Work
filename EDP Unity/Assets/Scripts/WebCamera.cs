@@ -56,7 +56,7 @@ public class WebCamera : MonoBehaviour
 
     // ARKit.Frame frame;
 
-    this.capture = new ARKit.Camera(1, new ARKit.Size(1080, 720));
+    this.capture = new ARKit.Camera(0, new ARKit.Size(1080, 720));
 
     //setting the matched image
     Emgu.CV.Mat frame = Emgu.CV.CvInvoke.Imread("match-external-webcam.jpg");
