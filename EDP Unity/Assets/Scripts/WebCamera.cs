@@ -23,6 +23,7 @@ public class WebCamera : MonoBehaviour
   public RawImage background;
   public AspectRatioFitter fit;
   public Canvas canvas;
+  public ARKit.Size resolution;
 
   private void Start()
   {
@@ -58,7 +59,8 @@ public class WebCamera : MonoBehaviour
 
     ARKit.Frame frame;
 
-    this.capture = new ARKit.Camera(0, new ARKit.Size(1280, 720));
+    this.resolution = new ARKit.Size(1280, 720);
+    this.capture = new ARKit.Camera(1, this.resolution);
 
     frame = this.capture.GetNextFrame();
 
@@ -81,6 +83,11 @@ public class WebCamera : MonoBehaviour
     ARKit.FeaturePoints.ComputeAndSave("simpsons-orig.jpg", "Assets/keypoints.yml");
     this.fp = ARKit.FeaturePoints.ReadData("Assets/keypoints.yml");
     //ARKit.Memory.Frame = Emgu.CV.CvInvoke.Imread("match.jpg");
+
+    //double fy = ARKit.MatExtension.GetValue(this.ip.CameraMatrix, 1, 1);
+    //float vfov = 2.0f * Mathf.Atan((float)(0.5 * this.resolution.Height / fy)) * Mathf.Rad2Deg; // virtual camera (pinhole type) vertical field of view
+    //Camera.main.fieldOfView = vfov;
+    //Camera.main.aspect = (float)this.resolution.Width / (float)this.resolution.Height;
   }
 
 
@@ -159,20 +166,44 @@ public class WebCamera : MonoBehaviour
             tm[i, 0] = ARKit.MatExtension.GetValue(t, i, 0);
           }
 
-          rm = rm.Transpose();
-          // tm = -1 * rm * tm;
+          {// START -> setting position here
+            Vector3 position = new Vector3()
+            {
+              x = (float)tm[0, 0],
+              y = (float)-tm[1, 0],
+              z = (float)tm[2, 0]
+            };
+            
+            //double cx = ARKit.MatExtension.GetValue(this.ip.CameraMatrix, 0, 2);
+            //double cy = ARKit.MatExtension.GetValue(this.ip.CameraMatrix, 1, 2);
 
-          Vector3 position = new Vector3()
-          {
-            x = (float)(tm[0, 0] + ARKit.MatExtension.GetValue(this.ip.CameraMatrix, 0, 2)),
-            y = (float)(-tm[1, 0] + ARKit.MatExtension.GetValue(this.ip.CameraMatrix, 1, 2)),
-            z = (float)tm[2, 0]
-          };
+            //Vector3 imageCenter = new Vector3(0.5f, 0.5f, position.z); // in viewport coordinates
+            //Vector3 opticalCenter = new Vector3(0.5f + (float)cx / this.resolution.Width, 0.5f + (float)cy / resolution.Height, position.z); // in viewport coordinates
+            //print(cx);
+            //print(resolution.Width);
+            //print(0.5f + (float)cx / resolution.Width);
+            //print(0.5f + (float)cy / resolution.Height);
 
-          Vector4 rQ = ConvertRotationMatToQuaternion(rm);
+            //position += cam.ViewportToWorldPoint(imageCenter) - cam.ViewportToWorldPoint(opticalCenter); // set positions in image to be center of camera
+            //position.y *= -1;
+            //position.z = (float)tm[2, 0];
 
-          cam.transform.position = -1 * position;
-          cam.transform.rotation = new Quaternion(rQ.x, -rQ.y, rQ.z, rQ.w);
+            //if (Mathf.Abs(cam.transform.position.z - position.z) < 500)
+            cam.transform.position = -1 * position; // inverting translation
+          }// END -> setting position here
+
+          {// START -> setting rotation here
+            rm = rm.Transpose(); // inverting rotation
+
+            Vector4 rQ = ConvertRotationMatToQuaternion(rm);
+
+            //Vector3 forwards = new Vector3((float)rm[0, 2], (float)-rm[1, 2], (float)rm[2, 2]);
+            //Vector3 upwards = new Vector3((float)rm[0, 1], (float)-rm[1, 1], (float)rm[2, 1]);
+
+            cam.transform.rotation = new Quaternion(rQ.x, -rQ.y, rQ.z, rQ.w);
+            //cam.transform.rotation = Quaternion.LookRotation(forwards, upwards);
+          }// END -> setting rotation here
+
 
           // debugging section
           Matrix4x4 hmat = new Matrix4x4()

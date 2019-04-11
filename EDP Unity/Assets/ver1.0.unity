@@ -399,7 +399,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_AspectMode: 0
-  m_AspectRatio: 2.0460923
+  m_AspectRatio: 2.016835
 --- !u!114 &388353895
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -487,8 +487,8 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 2000
-  field of view: 50
+  far clip plane: 3000
+  field of view: 10
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
